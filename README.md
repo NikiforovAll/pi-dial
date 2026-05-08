@@ -35,53 +35,16 @@ DIAL ([ai-proxy.lab.epam.com](https://ai-proxy.lab.epam.com)) integration for th
 ## Commands
 
 ```
-/dial pick           interactive picker for configured DIAL models
+/dial pick           interactive picker over all DIAL chat+tools models
 /dial pick <id>      switch directly to <id>
-/dial info [<id>]    print model details + per-min/per-day token limits
+/dial info [<id>]    full model details + per-min/per-day token limits
 /dial status         force a one-shot status-bar refresh
+/dial list           print every available model id
 ```
 
-## Configuration
-
-In `.pi/settings.json`:
-
-```json
-{
-  "defaultProvider": "dial",
-  "dial": {
-    "model":       ["dial/gpt-5.5-2026-04-24"],
-    "small_model": ["dial/moonshotai.kimi-k2.5"]
-  }
-}
-```
-
-The picker lists `small_model + model` as candidates. Models marked over the
-95% per-day or per-minute cap are flagged but still selectable.
-
-## Recording a demo
-
-To record `pi-dial` running against a throwaway test project:
-
-```sh
-mkdir /tmp/pi-dial-demo && cd /tmp/pi-dial-demo
-git init -q
-# point this scratch project at the same local pi-dial install:
-mkdir -p .pi/npm
-cat > .pi/npm/package.json <<'JSON'
-{ "name": "demo", "private": true, "dependencies": { "pi-dial": "file:/c/Users/nikiforovall/dev/pi-dial" } }
-JSON
-(cd .pi/npm && npm install)
-export DIAL_API_KEY=...
-```
-
-Then capture with one of:
-
-- **asciinema** — `asciinema rec demo.cast` → `agg demo.cast demo.gif`
-- **vhs** — write a `demo.tape` script (`Type "/dial pick"` / `Enter` / `Sleep 2s`) → `vhs demo.tape`
-- **OS screen recorder** — Windows: Win+G; macOS: Cmd+Shift+5
-
-Record the golden flow: `pi` → `/dial list` → `/dial pick` → arrow-select a
-model → status bar updates → `/dial info`.
+The picker lists every DIAL model exposing `chat_completion + tools`,
+sorted by lowest day-usage first. Models over the 95% per-day or per-minute
+cap are flagged with `⚠ over cap` but stay selectable.
 
 ## Bundled skill
 
@@ -90,9 +53,9 @@ The package ships a `dial` skill (`skills/dial/SKILL.md`) declared via
 with `/dial` (the skill name) in a session that needs to query the DIAL
 catalog or rate limits via the CLI.
 
-The skill invokes the CLI as plain `dial` — add `<pi-dial>/bin` to your
-`PATH` (or symlink `bin/dial[.exe]` somewhere already on PATH) so the
-shell can find it.
+The skill invokes the CLI as plain `dial`. The extension auto-prepends
+`<pi-dial>/bin` to `process.env.PATH` on load, so subagents and skill
+shells inherit it without manual setup.
 
 ## Differences vs the POC
 

@@ -1,5 +1,5 @@
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { fetchLimits, fetchModelDetails, listModels, pct } from "../lib/dial-bin.js";
+import { fetchLimits, fetchModelDetails, fmtPct, listModels, pct } from "../lib/dial-bin.js";
 
 const SUBCOMMANDS = ["pick", "info", "status", "list"] as const;
 type Sub = (typeof SUBCOMMANDS)[number];
@@ -198,19 +198,15 @@ async function runInfo(ctx: ExtensionContext, modelId?: string) {
 		}
 	}
 
+	const fmtQuota = (label: string, s: { used?: number; total?: number } | undefined) => {
+		if (!s) return;
+		lines.push(`  ${label.padEnd(11)}: ${s.used?.toLocaleString() ?? "n/a"} / ${s.total?.toLocaleString() ?? "n/a"} (${fmtPct(s.used, s.total)})`);
+	};
 	if (limits?.dayTokenStats || limits?.minuteTokenStats) {
 		lines.push("");
 		lines.push("Quota usage:");
-		if (limits.dayTokenStats) {
-			const d = limits.dayTokenStats;
-			const p = d.total && d.total > 0 ? Math.round((d.used ?? 0) / d.total * 100) : null;
-			lines.push(`  day        : ${d.used?.toLocaleString() ?? "n/a"} / ${d.total?.toLocaleString() ?? "n/a"}${p == null ? "" : ` (${p}%)`}`);
-		}
-		if (limits.minuteTokenStats) {
-			const m = limits.minuteTokenStats;
-			const p = m.total && m.total > 0 ? Math.round((m.used ?? 0) / m.total * 100) : null;
-			lines.push(`  minute     : ${m.used?.toLocaleString() ?? "n/a"} / ${m.total?.toLocaleString() ?? "n/a"}${p == null ? "" : ` (${p}%)`}`);
-		}
+		fmtQuota("day", limits.dayTokenStats);
+		fmtQuota("minute", limits.minuteTokenStats);
 	}
 
 	ctx.ui.notify(lines.join("\n"), "info");
@@ -230,10 +226,9 @@ async function runStatus(ctx: ExtensionContext) {
 	}
 	const m = lim.minuteTokenStats ?? {};
 	const d = lim.dayTokenStats ?? {};
-	const minPct = m.total ? `${Math.min(100, Math.round(((m.used ?? 0) / m.total) * 100))}%` : "n/a";
-	const dayPct = d.total ? `${Math.min(100, Math.round(((d.used ?? 0) / d.total) * 100))}%` : "n/a";
-	ctx.ui.setStatus("dial", `min ${minPct} · day ${dayPct}`);
-	ctx.ui.notify(`dial: min ${minPct} · day ${dayPct}`, "info");
+	const value = `min ${fmtPct(m.used, m.total)} · day ${fmtPct(d.used, d.total)}`;
+	ctx.ui.setStatus("dial", value);
+	ctx.ui.notify(`dial: ${value}`, "info");
 }
 
 async function runList(ctx: ExtensionContext) {

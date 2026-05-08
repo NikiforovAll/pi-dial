@@ -106,8 +106,21 @@ export function loadCachedModels(): DialModelMinimal[] | null {
 	const path = join(homedir(), ".dial-cache.json");
 	if (!existsSync(path)) return null;
 	try {
-		const parsed = JSON.parse(readFileSync(path, "utf8")) as { models?: DialModelMinimal[] };
-		return Array.isArray(parsed?.models) && parsed.models.length > 0 ? parsed.models : null;
+		// Cache stores raw DIAL API shape (capabilities.chat_completion, features.tools);
+		// CLI's `models list` flattens these to top-level booleans. Normalize on read
+		// so consumers see the same shape regardless of source.
+		type Raw = DialModelMinimal & {
+			capabilities?: { chat_completion?: boolean };
+			features?: { tools?: boolean };
+		};
+		const parsed = JSON.parse(readFileSync(path, "utf8")) as { models?: Raw[] };
+		const raw = parsed?.models;
+		if (!Array.isArray(raw) || raw.length === 0) return null;
+		return raw.map((m) => ({
+			...m,
+			chat_completion: m.chat_completion ?? m.capabilities?.chat_completion,
+			tools: m.tools ?? m.features?.tools,
+		}));
 	} catch {
 		return null;
 	}

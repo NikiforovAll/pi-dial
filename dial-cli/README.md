@@ -1,7 +1,6 @@
 # dial-cli
 
-Tiny Go CLI that talks to the DIAL `/openai/models*` endpoints. Used by the
-`pi-dial` extensions instead of reimplementing HTTP/auth in TypeScript.
+Tiny Go CLI that talks to the DIAL `/openai/models*` endpoints. Used by the `pi-dial` extensions instead of reimplementing HTTP/auth in TypeScript.
 
 ## Build
 
@@ -21,8 +20,7 @@ Or, from the package root:
 npm run build:cli
 ```
 
-The binary is gitignored — every consumer builds their own. The extensions
-look for it at:
+The binary is gitignored — every consumer builds their own. The extensions look for it at:
 
 1. `<package-root>/bin/dial[.exe]`
 2. `<package-root>/dial-cli/dial[.exe]` (dev fallback)

@@ -16,11 +16,7 @@ Interact with EPAM's DIAL AI proxy service to discover models, check capabilitie
 export DIAL_API_KEY="your-api-key"
 ```
 
-**CLI discovery**: the `pi-dial` extension auto-prepends its `bin/` directory
-to `PATH` when it loads — so `dial` is invokable directly from any shell pi
-spawns (subagents, skills, hooks). If you see `dial: command not found`,
-the extension hasn't loaded; verify the package is installed and the binary
-was built (`cd <pi-dial>/dial-cli && go build -o ../bin/dial[.exe] .`).
+**CLI discovery**: the `pi-dial` extension auto-prepends its `bin/` directory to `PATH` when it loads — so `dial` is invokable directly from any shell pi spawns (subagents, skills, hooks). If you see `dial: command not found`, the extension hasn't loaded; verify the package is installed and the binary was built (`cd <pi-dial>/dial-cli && go build -o ../bin/dial[.exe] .`).
 
 ## Core Commands
 

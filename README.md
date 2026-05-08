@@ -42,24 +42,15 @@ DIAL ([ai-proxy.lab.epam.com](https://ai-proxy.lab.epam.com)) integration for th
 /dial list           print every available model id
 ```
 
-The picker lists every DIAL model exposing `chat_completion + tools`,
-sorted by lowest day-usage first. Models over the 95% per-day or per-minute
-cap are flagged with `⚠ over cap` but stay selectable.
+The picker lists every DIAL model exposing `chat_completion + tools`, sorted by lowest day-usage first. Models over the 95% per-day or per-minute cap are flagged with `⚠ over cap` but stay selectable.
 
 ## Bundled skill
 
-The package ships a `dial` skill (`skills/dial/SKILL.md`) declared via
-`pi.skills` in `package.json`. After install, pi auto-discovers it; load it
-with `/dial` (the skill name) in a session that needs to query the DIAL
-catalog or rate limits via the CLI.
+The package ships a `dial` skill (`skills/dial/SKILL.md`) declared via `pi.skills` in `package.json`. After install, pi auto-discovers it; load it with `/dial` (the skill name) in a session that needs to query the DIAL catalog or rate limits via the CLI.
 
-The skill invokes the CLI as plain `dial`. The extension auto-prepends
-`<pi-dial>/bin` to `process.env.PATH` on load, so subagents and skill
-shells inherit it without manual setup.
+The skill invokes the CLI as plain `dial`. The extension auto-prepends `<pi-dial>/bin` to `process.env.PATH` on load, so subagents and skill shells inherit it without manual setup.
 
 ## Differences vs the POC
 
-- The previous POC auto-switched models on session start (`dial-selector.ts`).
-  That behavior is removed: switching is now explicit via `/dial pick`.
-- All four extensions share `lib/dial-bin.ts` instead of each duplicating
-  `resolveDialBinary()`.
+- The previous POC auto-switched models on session start (`dial-selector.ts`). That behavior is removed: switching is now explicit via `/dial pick`.
+- All four extensions share `lib/dial-bin.ts` instead of each duplicating `resolveDialBinary()`.

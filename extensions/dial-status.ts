@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { fetchLimits, fmtPct } from "../lib/dial-bin.js";
 
 const POLL_MS = 60_000;

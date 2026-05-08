@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { fetchLimits, fetchModelDetails, fmtPct, listModels, pct } from "../lib/dial-bin.js";
 
 const SUBCOMMANDS = ["pick", "info", "status", "list"] as const;

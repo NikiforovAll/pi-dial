@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { listModels } from "../lib/dial-bin.js";
+import { listModels, loadCachedModels } from "../lib/dial-bin.js";
 
 const DIAL_HOST = "https://ai-proxy.lab.epam.com";
 
@@ -9,7 +9,7 @@ export default async function (pi: ExtensionAPI) {
 		return;
 	}
 
-	const data = await listModels();
+	const data = loadCachedModels() ?? (await listModels());
 	if (data.length === 0) {
 		console.warn("[pi-dial] dial-cli returned no models — provider not registered");
 		return;
@@ -83,6 +83,4 @@ export default async function (pi: ExtensionAPI) {
 		}
 		return mutated ? payload : undefined;
 	});
-
-	console.log(`[pi-dial] registered ${models.length} models (cacheRead/cacheWrite priced as input — DIAL does not expose cache pricing)`);
 }

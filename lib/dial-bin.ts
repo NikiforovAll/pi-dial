@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
-import { existsSync } from "node:fs";
-import { delimiter, dirname, resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { delimiter, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
@@ -57,7 +58,6 @@ function injectIntoPath(binDir: string): void {
 	const parts = cur.split(delimiter);
 	if (parts.some((p) => p && resolve(p) === resolve(binDir))) return;
 	process.env.PATH = `${binDir}${delimiter}${cur}`;
-	console.log(`[pi-dial] prepended ${binDir} to PATH (so subagents/skills can invoke '${EXE}')`);
 }
 
 const localBin = findLocalBinary();
@@ -97,6 +97,20 @@ export function fetchModelDetails(modelId: string): Promise<DialDetails | null> 
 export async function listModels(): Promise<DialModelMinimal[]> {
 	const data = await runJson<DialModelMinimal[]>(["models", "list", "--json"]);
 	return data ?? [];
+}
+
+// Read the dial-cli cache directly from ~/.dial-cache.json. Skips spawning
+// the CLI when the cache is warm — the CLI itself never expires this file
+// (only `dial models refresh` rewrites it), so this matches CLI semantics.
+export function loadCachedModels(): DialModelMinimal[] | null {
+	const path = join(homedir(), ".dial-cache.json");
+	if (!existsSync(path)) return null;
+	try {
+		const parsed = JSON.parse(readFileSync(path, "utf8")) as { models?: DialModelMinimal[] };
+		return Array.isArray(parsed?.models) && parsed.models.length > 0 ? parsed.models : null;
+	} catch {
+		return null;
+	}
 }
 
 export function pct(used: number, total: number): number {

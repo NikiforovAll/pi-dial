@@ -4,6 +4,8 @@ DIAL ([ai-proxy.lab.epam.com](https://ai-proxy.lab.epam.com)) integration for th
 
 > Local-only package. Not published to npm — install from a sibling checkout.
 
+![](./assets//model-picker.png)
+
 ## Install
 
 1. Clone next to your pi project:

@@ -1,7 +1,6 @@
 ---
 name: dial
 description: Query the DIAL AI model catalog, inspect a specific model's details/capabilities, or check rate-limit usage via the local `dial` CLI shipped with the pi-dial package. Trigger when the user asks about DIAL models, "what openweight/Anthropic/GPT model is available", token quotas / rate limits, or wants to look up a model id served via EPAM's DIAL proxy.
-allowed-tools: Bash(dial:*)
 ---
 
 # dial CLI skill
@@ -37,5 +36,4 @@ Add `--json` to any command for machine-parseable output.
 ## Tips
 
 - Don't fabricate prices — read them from `pricing` on each call. DIAL pricing is not pinned in this skill on purpose.
-- Use `--filter` before parsing — it's faster than `grep` and respects the CLI's match semantics.
 - For programmatic lookups always pair with `--json` and pipe to `jq`.

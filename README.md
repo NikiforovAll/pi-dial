@@ -49,8 +49,3 @@ The picker lists every DIAL model exposing `chat_completion + tools`, sorted by 
 The package ships a `dial` skill (`skills/dial/SKILL.md`) declared via `pi.skills` in `package.json`. After install, pi auto-discovers it; load it with `/dial` (the skill name) in a session that needs to query the DIAL catalog or rate limits via the CLI.
 
 The skill invokes the CLI as plain `dial`. The extension auto-prepends `<pi-dial>/bin` to `process.env.PATH` on load, so subagents and skill shells inherit it without manual setup.
-
-## Differences vs the POC
-
-- The previous POC auto-switched models on session start (`dial-selector.ts`). That behavior is removed: switching is now explicit via `/dial pick`.
-- All four extensions share `lib/dial-bin.ts` instead of each duplicating `resolveDialBinary()`.

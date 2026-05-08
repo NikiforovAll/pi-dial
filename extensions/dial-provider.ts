@@ -3,20 +3,6 @@ import { listModels } from "../lib/dial-bin.js";
 
 const DIAL_HOST = "https://ai-proxy.lab.epam.com";
 
-function cacheReadFactor(id: string, autoCaching: boolean): number {
-	if (/^anthropic\.|^claude/i.test(id)) return 0.10;
-	if (!autoCaching) return 0;
-	if (/^gpt-5/i.test(id)) return 0.10;
-	if (/^gpt-4\.1/i.test(id)) return 0.25;
-	if (/^(gpt-4o|gpt-4|o[1-9])/i.test(id)) return 0.50;
-	return 0.50;
-}
-
-function cacheWriteFactor(id: string): number {
-	if (/^anthropic\.|^claude/i.test(id)) return 1.25;
-	return 0;
-}
-
 export default async function (pi: ExtensionAPI) {
 	if (!process.env.DIAL_API_KEY) {
 		console.warn("[pi-dial] DIAL_API_KEY not set — skipping provider registration");
@@ -32,13 +18,16 @@ export default async function (pi: ExtensionAPI) {
 	const useCompletionField = (id: string) => /^(gpt-5|gpt-4\.1|o[1-9])/i.test(id);
 	const isAnthropic = (id: string) => /^anthropic\.|^claude/i.test(id);
 
+	// DIAL exposes only `prompt` and `completion` per-token prices. It does NOT
+	// publish cache-read or cache-write factors, and the proxy may not pass
+	// through the upstream provider's discounts. We therefore charge cache
+	// hits at the input price (truthful pessimistic estimate) instead of
+	// applying public OpenAI/Anthropic factors that may not match DIAL billing.
 	const models = data
 		.filter((m) => m.chat_completion && m.tools)
 		.map((m) => {
 			const inputPrice = Number(m.pricing?.prompt ?? 0) * 1_000_000;
 			const outputPrice = Number(m.pricing?.completion ?? 0) * 1_000_000;
-			const crFactor = cacheReadFactor(m.id, !!m.auto_caching);
-			const cwFactor = cacheWriteFactor(m.id);
 			return {
 				id: m.id,
 				name: m.display_name ?? m.id,
@@ -48,8 +37,8 @@ export default async function (pi: ExtensionAPI) {
 				cost: {
 					input: inputPrice,
 					output: outputPrice,
-					cacheRead: inputPrice * crFactor,
-					cacheWrite: inputPrice * cwFactor,
+					cacheRead: inputPrice,
+					cacheWrite: inputPrice,
 				},
 				contextWindow: 128000,
 				maxTokens: 8000,
@@ -95,6 +84,5 @@ export default async function (pi: ExtensionAPI) {
 		return mutated ? payload : undefined;
 	});
 
-	const cached = models.filter((m) => m.cost.cacheRead > 0).length;
-	console.log(`[pi-dial] registered ${models.length} models; ${cached} with prompt-cache pricing`);
+	console.log(`[pi-dial] registered ${models.length} models (cacheRead/cacheWrite priced as input — DIAL does not expose cache pricing)`);
 }

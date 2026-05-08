@@ -128,6 +128,21 @@ async function runPicker(pi: ExtensionAPI, ctx: ExtensionContext, requestedId?: 
 	if (ok) ctx.ui.notify(`dial: ${currentId ?? "(none)"} → ${targetId}`, "info");
 }
 
+function fmtPrice(unitPrice: string | undefined): string {
+	if (!unitPrice) return "n/a";
+	const n = Number(unitPrice);
+	if (!Number.isFinite(n) || n === 0) return "free";
+	return `$${(n * 1_000_000).toFixed(2)}/M tokens`;
+}
+
+function listTrueKeys(rec: Record<string, unknown> | undefined): string[] {
+	if (!rec) return [];
+	return Object.entries(rec)
+		.filter(([, v]) => v === true)
+		.map(([k]) => k)
+		.sort();
+}
+
 async function runInfo(ctx: ExtensionContext, modelId?: string) {
 	const targetId = modelId || (ctx.model?.provider === "dial" ? ctx.model.id : undefined);
 	if (!targetId) {
@@ -138,23 +153,64 @@ async function runInfo(ctx: ExtensionContext, modelId?: string) {
 	const [details, limits] = await Promise.all([fetchModelDetails(targetId), fetchLimits(targetId)]);
 
 	const lines: string[] = [`=== ${targetId} ===`];
-	const displayName = details?.display_name ?? "details unavailable";
-	lines.push(`Display name: ${displayName}`);
 
-	if (details?.headers) {
-		lines.push("\nHeaders:");
-		for (const [k, v] of Object.entries(details.headers)) lines.push(`  ${k}: ${v}`);
+	if (!details) {
+		lines.push("(details unavailable — DIAL CLI returned nothing)");
+	} else {
+		const dn = [details.display_name, details.display_version].filter(Boolean).join(" ");
+		if (dn) lines.push(`Display name : ${dn}`);
+		if (details.lifecycle_status) lines.push(`Lifecycle    : ${details.lifecycle_status}`);
+		if (details.tokenizer_model) lines.push(`Tokenizer    : ${details.tokenizer_model}`);
+		if (details.description) lines.push(`Description  : ${details.description}`);
+
+		if (details.pricing) {
+			lines.push("");
+			lines.push("Pricing:");
+			lines.push(`  prompt     : ${fmtPrice(details.pricing.prompt)}`);
+			lines.push(`  completion : ${fmtPrice(details.pricing.completion)}`);
+			if (details.pricing.unit) lines.push(`  unit       : ${details.pricing.unit}`);
+		}
+
+		if (details.limits) {
+			lines.push("");
+			lines.push("Limits (model):");
+			for (const [k, v] of Object.entries(details.limits)) {
+				lines.push(`  ${k.padEnd(22)}: ${typeof v === "number" ? v.toLocaleString() : String(v)}`);
+			}
+		}
+
+		const caps = listTrueKeys(details.capabilities);
+		if (caps.length) {
+			lines.push("");
+			lines.push(`Capabilities : ${caps.join(", ")}`);
+		}
+		const feats = listTrueKeys(details.features);
+		if (feats.length) lines.push(`Features     : ${feats.join(", ")}`);
+
+		if (details.input_attachment_types?.length) {
+			lines.push(`Attachments  : ${details.input_attachment_types.join(", ")}`);
+		}
+
+		if (details.headers && Object.keys(details.headers).length) {
+			lines.push("");
+			lines.push("Headers:");
+			for (const [k, v] of Object.entries(details.headers)) lines.push(`  ${k}: ${v}`);
+		}
 	}
 
-	if (limits?.dayTokenStats) {
-		const d = limits.dayTokenStats;
-		const p = d.total && d.total > 0 ? Math.round((d.used ?? 0) / d.total * 100) : null;
-		lines.push(`\nDaily tokens: ${d.used?.toLocaleString() ?? "n/a"} / ${d.total?.toLocaleString() ?? "n/a"}${p == null ? "" : ` (${p}%)`}`);
-	}
-	if (limits?.minuteTokenStats) {
-		const m = limits.minuteTokenStats;
-		const p = m.total && m.total > 0 ? Math.round((m.used ?? 0) / m.total * 100) : null;
-		lines.push(`Minute tokens: ${m.used?.toLocaleString() ?? "n/a"} / ${m.total?.toLocaleString() ?? "n/a"}${p == null ? "" : ` (${p}%)`}`);
+	if (limits?.dayTokenStats || limits?.minuteTokenStats) {
+		lines.push("");
+		lines.push("Quota usage:");
+		if (limits.dayTokenStats) {
+			const d = limits.dayTokenStats;
+			const p = d.total && d.total > 0 ? Math.round((d.used ?? 0) / d.total * 100) : null;
+			lines.push(`  day        : ${d.used?.toLocaleString() ?? "n/a"} / ${d.total?.toLocaleString() ?? "n/a"}${p == null ? "" : ` (${p}%)`}`);
+		}
+		if (limits.minuteTokenStats) {
+			const m = limits.minuteTokenStats;
+			const p = m.total && m.total > 0 ? Math.round((m.used ?? 0) / m.total * 100) : null;
+			lines.push(`  minute     : ${m.used?.toLocaleString() ?? "n/a"} / ${m.total?.toLocaleString() ?? "n/a"}${p == null ? "" : ` (${p}%)`}`);
+		}
 	}
 
 	ctx.ui.notify(lines.join("\n"), "info");

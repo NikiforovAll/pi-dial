@@ -25,8 +25,16 @@ export interface DialLimits {
 export interface DialDetails {
 	id?: string;
 	display_name?: string;
+	display_version?: string;
+	description?: string;
 	lifecycle_status?: string;
-	pricing?: { prompt?: string; completion?: string };
+	tokenizer_model?: string;
+	capabilities?: Record<string, unknown>;
+	features?: Record<string, unknown>;
+	input_attachment_types?: string[];
+	limits?: { max_completion_tokens?: number; max_total_tokens?: number; [k: string]: unknown };
+	defaults?: Record<string, unknown>;
+	pricing?: { prompt?: string; completion?: string; unit?: string };
 	chat_completion?: boolean;
 	tools?: boolean;
 	auto_caching?: boolean;
@@ -83,7 +91,7 @@ export function fetchLimits(modelId: string): Promise<DialLimits | null> {
 }
 
 export function fetchModelDetails(modelId: string): Promise<DialDetails | null> {
-	return runJson<DialDetails>(["models", modelId, "details", "--json"]);
+	return runJson<DialDetails>(["models", modelId, "--all", "--json"]);
 }
 
 export async function listModels(): Promise<DialModelMinimal[]> {

@@ -1,6 +1,6 @@
 ---
 name: dial
-description: Use this skill for querying DIAL AI model catalog, checking model details, and reviewing rate limits. Works with locally installed dial CLI.
+description: Query the DIAL AI model catalog, inspect a specific model's details/capabilities, or check rate-limit usage via the local `dial` CLI shipped with the pi-dial package. Trigger when the user asks about DIAL models, "what openweight/Anthropic/GPT model is available", token quotas / rate limits, or wants to look up a model id served via EPAM's DIAL proxy.
 allowed-tools: Bash(dial:*), Read
 ---
 
@@ -10,15 +10,17 @@ Interact with EPAM's DIAL AI proxy service to discover models, check capabilitie
 
 ## Setup
 
-**Required**: Set `DIAL_API_KEY` environment variable before use.
+**Required**: `DIAL_API_KEY` environment variable.
 
 ```bash
 export DIAL_API_KEY="your-api-key"
 ```
 
-**CLI**: invoked as `dial` — the `pi-dial` package ships the binary at
-`<package>/bin/dial[.exe]`. Add that directory to `PATH`, or symlink/alias
-`dial` to it, before invoking this skill.
+**CLI discovery**: the `pi-dial` extension auto-prepends its `bin/` directory
+to `PATH` when it loads — so `dial` is invokable directly from any shell pi
+spawns (subagents, skills, hooks). If you see `dial: command not found`,
+the extension hasn't loaded; verify the package is installed and the binary
+was built (`cd <pi-dial>/dial-cli && go build -o ../bin/dial[.exe] .`).
 
 ## Core Commands
 

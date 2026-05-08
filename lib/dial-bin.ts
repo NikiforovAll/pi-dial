@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { delimiter, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
@@ -34,28 +34,36 @@ export interface DialDetails {
 }
 
 const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const EXE = process.platform === "win32" ? "dial.exe" : "dial";
 
-let cachedBin: string | undefined;
+function findLocalBinary(): { path: string; dir: string } | null {
+	for (const dir of [resolve(PKG_ROOT, "bin"), resolve(PKG_ROOT, "dial-cli")]) {
+		const p = resolve(dir, EXE);
+		if (existsSync(p)) return { path: p, dir };
+	}
+	return null;
+}
+
+function injectIntoPath(binDir: string): void {
+	const cur = process.env.PATH ?? "";
+	const parts = cur.split(delimiter);
+	if (parts.some((p) => p && resolve(p) === resolve(binDir))) return;
+	process.env.PATH = `${binDir}${delimiter}${cur}`;
+	console.log(`[pi-dial] prepended ${binDir} to PATH (so subagents/skills can invoke '${EXE}')`);
+}
+
+const localBin = findLocalBinary();
+if (localBin) {
+	injectIntoPath(localBin.dir);
+} else {
+	console.warn(
+		`[pi-dial] ${EXE} not found in <pkg>/bin or <pkg>/dial-cli. ` +
+		`Falling back to PATH lookup. Build with: cd dial-cli && go build -o ../bin/${EXE} .`,
+	);
+}
 
 export function resolveDialBinary(): string {
-	if (cachedBin) return cachedBin;
-	const exe = process.platform === "win32" ? "dial.exe" : "dial";
-	const candidates = [
-		resolve(PKG_ROOT, "bin", exe),
-		resolve(PKG_ROOT, "dial-cli", exe),
-	];
-	for (const c of candidates) {
-		if (existsSync(c)) {
-			cachedBin = c;
-			return c;
-		}
-	}
-	console.warn(
-		`[pi-dial] ${exe} not found in ${candidates.join(" or ")}. ` +
-		`Falling back to PATH. Build with: cd dial-cli && go build -o ../bin/${exe} .`,
-	);
-	cachedBin = exe;
-	return exe;
+	return localBin?.path ?? EXE;
 }
 
 async function runJson<T>(args: string[]): Promise<T | null> {

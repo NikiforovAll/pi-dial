@@ -1,0 +1,38 @@
+{
+  "name": "pi-dial",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DIAL provider, status, info, and interactive model picker for the pi coding agent",
+  "files": [
+    "extensions/",
+    "lib/",
+    "bin/",
+    "skills/",
+    "README.md"
+  ],
+  "scripts": {
+    "build:cli": "node -e \"const{spawnSync}=require('child_process');const ext=process.platform==='win32'?'.exe':'';const r=spawnSync('go',['build','-o','../bin/dial'+ext,'.'],{cwd:'dial-cli',stdio:'inherit'});process.exit(r.status||0)\""
+  },
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "dial",
+    "epam"
+  ],
+  "license": "MIT",
+  "author": "nikiforovall",
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
